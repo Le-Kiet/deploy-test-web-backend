@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Anniversary = require('../models/Anniversary');
-
+function isValidCoordinates(coords) {
+  return Array.isArray(coords) && coords.length === 2 && 
+         typeof coords[0] === 'number' && typeof coords[1] === 'number';
+}
 // GET all
 // GET all - format dữ liệu trả về
 router.get('/', async (req, res) => {
@@ -29,6 +32,7 @@ router.get('/', async (req, res) => {
 
 
 // POST new
+
 router.post('/', async (req, res) => {
   try {
     const {
@@ -40,14 +44,22 @@ router.post('/', async (req, res) => {
     const newAnni = new Anniversary({
       id, anni_date, event_name,
       location_name, address,
-      location_coordinates: location_coordinates
-        ? { type: 'Point', coordinates: location_coordinates }
-        : undefined,
-      grave_coordinates: grave_coordinates
-        ? { type: 'Point', coordinates: grave_coordinates }
-        : undefined,
       note
     });
+
+    if (isValidCoordinates(location_coordinates)) {
+      newAnni.location_coordinates = {
+        type: 'Point',
+        coordinates: location_coordinates
+      };
+    }
+
+    if (isValidCoordinates(grave_coordinates)) {
+      newAnni.grave_coordinates = {
+        type: 'Point',
+        coordinates: grave_coordinates
+      };
+    }
 
     await newAnni.save();
     res.status(201).json({ message: 'Thêm sự kiện thành công' });
