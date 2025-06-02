@@ -19,5 +19,14 @@ router.post('/', async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+// Lấy danh sách tất cả user
+router.get('/', async (req, res) => {
+  try {
+    const users = await User.find(); // Lấy tất cả user từ MongoDB
+    res.json(users); // Trả về dạng mảng
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 module.exports = router;
