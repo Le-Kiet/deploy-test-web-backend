@@ -3,10 +3,30 @@ const router = express.Router();
 const Anniversary = require('../models/Anniversary');
 
 // GET all
+// GET all - format dữ liệu trả về
 router.get('/', async (req, res) => {
-  const data = await Anniversary.find();
-  res.json(data);
+  try {
+    const data = await Anniversary.find();
+
+    const formattedData = data.map(item => ({
+      id: item.id,
+      anni_date: item.anni_date,
+      event_name: item.event_name,
+      location_name: item.location_name,
+      address: item.address,
+      note: item.note || null,
+      latitude: item.location_coordinates?.coordinates?.[1] || null,
+      longtitude: item.location_coordinates?.coordinates?.[0] || null,
+      grave_lat: item.grave_coordinates?.coordinates?.[1] || null,
+      grave_lng: item.grave_coordinates?.coordinates?.[0] || null
+    }));
+
+    res.json(formattedData);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
+
 
 // POST new
 router.post('/', async (req, res) => {
@@ -21,10 +41,10 @@ router.post('/', async (req, res) => {
       id, anni_date, event_name,
       location_name, address,
       location_coordinates: location_coordinates
-        ? { type: 'Point', coordinates: [location_coordinates[0], location_coordinates[1]] }
+        ? { type: 'Point', coordinates: location_coordinates }
         : undefined,
       grave_coordinates: grave_coordinates
-        ? { type: 'Point', coordinates: [grave_coordinates[0], grave_coordinates[1]] }
+        ? { type: 'Point', coordinates: grave_coordinates }
         : undefined,
       note
     });
@@ -45,10 +65,10 @@ router.put('/:id', async (req, res) => {
     Object.assign(data, {
       ...req.body,
       location_coordinates: req.body.location_coordinates
-        ? { type: 'Point', coordinates: [req.body.location_coordinates[0], req.body.location_coordinates[1]] }
+        ? { type: 'Point', coordinates: req.body.location_coordinates }
         : data.location_coordinates,
       grave_coordinates: req.body.grave_coordinates
-        ? { type: 'Point', coordinates: [req.body.grave_coordinates[0], req.body.grave_coordinates[1]] }
+        ? { type: 'Point', coordinates: req.body.grave_coordinates }
         : data.grave_coordinates
     });
 
@@ -61,10 +81,14 @@ router.put('/:id', async (req, res) => {
 
 // DELETE
 router.delete('/:id', async (req, res) => {
-  const deleted = await Anniversary.deleteOne({ id: req.params.id });
-  res.json({
-    message: deleted.deletedCount ? 'Xóa thành công' : 'Không tìm thấy dữ liệu'
-  });
+  try {
+    const deleted = await Anniversary.deleteOne({ id: req.params.id });
+    res.json({
+      message: deleted.deletedCount ? 'Xóa thành công' : 'Không tìm thấy dữ liệu'
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
 module.exports = router;
