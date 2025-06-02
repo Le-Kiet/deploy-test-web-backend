@@ -10,31 +10,29 @@ const AnniversarySchema = new mongoose.Schema({
     type: {
       type: String,
       enum: ['Point'],
-      required: false,
+      default: 'Point'
     },
     coordinates: {
-      type: [Number],
-      required: false,
-    },
-    required: false,
+      type: [Number]
+    }
   },
   grave_coordinates: {
     type: {
       type: String,
       enum: ['Point'],
-      required: false,
+      default: 'Point'
     },
     coordinates: {
-      type: [Number],
-      required: false,
-    },
-    required: false,
+      type: [Number]
+    }
   },
-  note: { type: String },
+  note: { type: String }
 });
+
+// Cho phép cả `location_coordinates` và `grave_coordinates` là `undefined` hoặc không tồn tại
+// Không cần `required: false` trong nested field (Mongoose mặc định optional)
 
 AnniversarySchema.index({ location_coordinates: '2dsphere' });
 AnniversarySchema.index({ grave_coordinates: '2dsphere' });
 
 module.exports = mongoose.model('Anniversary', AnniversarySchema);
-  
