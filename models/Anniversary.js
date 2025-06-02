@@ -10,23 +10,27 @@ const AnniversarySchema = new mongoose.Schema({
     type: {
       type: String,
       enum: ['Point'],
-      default: 'Point'
+      required: false,
     },
     coordinates: {
-      type: [Number] // [lng, lat]
-    }
+      type: [Number],
+      required: false,
+    },
+    required: false,
   },
   grave_coordinates: {
     type: {
       type: String,
       enum: ['Point'],
-      default: 'Point'
+      required: false,
     },
     coordinates: {
-      type: [Number] // [lng, lat]
-    }
+      type: [Number],
+      required: false,
+    },
+    required: false,
   },
-  note: { type: String }
+  note: { type: String },
 });
 
 AnniversarySchema.index({ location_coordinates: '2dsphere' });
