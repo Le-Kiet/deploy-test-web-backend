@@ -45,13 +45,25 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   const { grave, generation, location, note, geom } = req.body;
 
-  if (!grave || !geom || geom.type !== 'Point' || !Array.isArray(geom.coordinates) || geom.coordinates.length !== 2) {
+  // ✅ Kiểm tra đúng theo kiểu schema (grave, location, note là string)
+  if (
+    typeof grave !== 'string' ||
+    typeof location !== 'string' ||
+    !geom ||
+    geom.type !== 'Point' ||
+    !Array.isArray(geom.coordinates) ||
+    geom.coordinates.length !== 2
+  ) {
     return res.status(422).json({ message: 'Dữ liệu không hợp lệ' });
   }
 
   try {
     const updated = await Grave.findByIdAndUpdate(req.params.id, {
-      grave, generation, location, note, geom
+      grave,
+      generation,
+      location,
+      note,
+      geom
     });
 
     if (!updated) {
@@ -63,6 +75,7 @@ router.put('/:id', async (req, res) => {
     res.status(500).json({ message: 'Lỗi khi cập nhật' });
   }
 });
+
 
 // DELETE grave
 router.delete('/:id', async (req, res) => {
