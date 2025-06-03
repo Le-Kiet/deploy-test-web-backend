@@ -80,15 +80,13 @@ router.put('/:id', async (req, res) => {
     const data = await Anniversary.findById(req.params.id); // <-- dùng findById với _id
     if (!data) return res.status(404).json({ message: 'Không tìm thấy dữ liệu' });
 
-    Object.assign(data, {
-      ...req.body,
-      location_coordinates: req.body.location_coordinates
-        ? { type: 'Point', coordinates: req.body.location_coordinates }
-        : data.location_coordinates,
-      grave_coordinates: req.body.grave_coordinates
-        ? { type: 'Point', coordinates: req.body.grave_coordinates }
-        : data.grave_coordinates
-    });
+
+Object.assign(data, {
+  ...req.body,
+  location_coordinates: req.body.location_coordinates ?? data.location_coordinates,
+  grave_coordinates: req.body.grave_coordinates ?? data.grave_coordinates
+});
+
 
     await data.save();
     res.json({ message: 'Cập nhật thành công' });
