@@ -1,18 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const Anniversary = require('../models/Anniversary');
+
 function isValidCoordinates(coords) {
-  return Array.isArray(coords) && coords.length === 2 && 
-         typeof coords[0] === 'number' && typeof coords[1] === 'number';
+  return Array.isArray(coords) &&
+    coords.length === 2 &&
+    typeof coords[0] === 'number' &&
+    typeof coords[1] === 'number';
 }
+
 // GET all
-// GET all - format dữ liệu trả về
 router.get('/', async (req, res) => {
   try {
     const data = await Anniversary.find();
 
     const formattedData = data.map(item => ({
-      id: item.id,
+      id: item._id, // <-- sửa lại từ item.id thành item._id
       anni_date: item.anni_date,
       event_name: item.event_name,
       location_name: item.location_name,
@@ -30,20 +33,23 @@ router.get('/', async (req, res) => {
   }
 });
 
-
 // POST new
-
 router.post('/', async (req, res) => {
   try {
     const {
-      id, anni_date, event_name,
-      location_name, address, location_coordinates,
-      grave_coordinates, note
+      id, // vẫn giữ tên id ở client để tiện, nhưng sẽ map sang _id
+      anni_date, event_name,
+      location_name, address,
+      location_coordinates, grave_coordinates,
+      note
     } = req.body;
 
     const newAnni = new Anniversary({
-      id, anni_date, event_name,
-      location_name, address,
+      _id: id, // <-- map vào _id ở schema
+      anni_date,
+      event_name,
+      location_name,
+      address,
       note
     });
 
@@ -71,7 +77,7 @@ router.post('/', async (req, res) => {
 // PUT update
 router.put('/:id', async (req, res) => {
   try {
-    const data = await Anniversary.findOne({ id: req.params.id });
+    const data = await Anniversary.findById(req.params.id); // <-- dùng findById với _id
     if (!data) return res.status(404).json({ message: 'Không tìm thấy dữ liệu' });
 
     Object.assign(data, {
@@ -94,7 +100,7 @@ router.put('/:id', async (req, res) => {
 // DELETE
 router.delete('/:id', async (req, res) => {
   try {
-    const deleted = await Anniversary.deleteOne({ id: req.params.id });
+    const deleted = await Anniversary.deleteOne({ _id: req.params.id }); // <-- xóa theo _id
     res.json({
       message: deleted.deletedCount ? 'Xóa thành công' : 'Không tìm thấy dữ liệu'
     });
