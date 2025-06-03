@@ -16,7 +16,7 @@ const PointSchema = new mongoose.Schema(
 );
 
 const AnniversarySchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
+  _id: { type: String, required: true, unique: true },
   anni_date: { type: String, required: true },
   event_name: { type: String, required: true },
   location_name: { type: String },
