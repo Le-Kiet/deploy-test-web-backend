@@ -87,6 +87,20 @@ router.post('/', async (req, res) => {
       videos
     });
 
+    if (isValidCoordinates(location_coordinates)) {
+      newAnni.location_coordinates = {
+        type: 'Point',
+        coordinates: location_coordinates
+      };
+    }
+
+    if (isValidCoordinates(grave_coordinates)) {
+      newAnni.grave_coordinates = {
+        type: 'Point',
+        coordinates: grave_coordinates
+      };
+    }
+
     await newAnni.save();
     console.log('Saved anniversary:', newAnni);
     res.status(201).json({ message: 'Thêm sự kiện thành công', data: newAnni });
