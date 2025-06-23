@@ -8,7 +8,8 @@ const anniversariesRouter = require('./routes/anniversaries');
 const gravesRouter = require('./routes/graves');
 const gravesImageRouter = require('./routes/gravesImage');
 const uploadVideoRouter = require('./routes/uploadVideo');  // <-- import router upload video
-
+const authRoutes = require('./routes/auth');
+// const postRoutes = require('./routes/posts');
 require('dotenv').config();
 
 const app = express();
@@ -23,7 +24,8 @@ app.use('/api/graves', gravesRouter);
 app.use('/api/graveImage', gravesImageRouter);
 
 app.use('/api/upload-video', uploadVideoRouter);  // <-- đăng ký route upload video
-
+app.use('/api/auth', authRoutes);
+// app.use('/api/posts', postRoutes);
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('MongoDB connected');
