@@ -116,15 +116,22 @@ router.put('/:id', async (req, res) => {
     const data = await Anniversary.findById(req.params.id);
     if (!data) return res.status(404).json({ message: 'Không tìm thấy dữ liệu' });
 
-    // Nếu có danh sách videos mới → so sánh và thay thế
+    // Xử lý videos
     if (req.body.videos && Array.isArray(req.body.videos)) {
       const oldVideos = data.videos || [];
       const newVideos = req.body.videos;
+      data.videos = [...oldVideos, ...newVideos].filter(
+        (value, index, self) => self.indexOf(value) === index
+      );
+    }
 
-      const isDifferent = JSON.stringify(oldVideos) !== JSON.stringify(newVideos);
-      if (isDifferent) {
-        data.videos = newVideos; // 👈 Ghi đè video mới, loại bỏ video cũ
-      }
+    // Xử lý images
+    if (req.body.images && Array.isArray(req.body.images)) {
+      const oldImages = data.images || [];
+      const newImages = req.body.images;
+      data.images = [...oldImages, ...newImages].filter(
+        (value, index, self) => self.indexOf(value) === index
+      );
     }
 
     Object.assign(data, {

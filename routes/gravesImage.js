@@ -68,22 +68,40 @@ router.put('/:id', async (req, res) => {
   }
 
   try {
-    const updated = await Grave.findByIdAndUpdate(req.params.id, {
-      grave,
-      generation,
-      location,
-      note,
-      geom,
-      ...(images && { images }),
-      ...(videos && { videos }),  // thêm xử lý videos nếu có
-    });
-
-    if (!updated) {
+    const existing = await GraveImage.findById(req.params.id);
+    if (!existing) {
       return res.status(404).json({ message: 'Không tìm thấy dữ liệu' });
     }
 
+    // Xử lý images: nối vào dữ liệu cũ nếu có
+    let updatedImages = existing.images || [];
+    if (Array.isArray(images)) {
+      updatedImages = [...updatedImages, ...images].filter(
+        (value, index, self) => self.indexOf(value) === index
+      );
+    }
+
+    // Xử lý videos: nối vào dữ liệu cũ nếu có
+    let updatedVideos = existing.videos || [];
+    if (Array.isArray(videos)) {
+      updatedVideos = [...updatedVideos, ...videos].filter(
+        (value, index, self) => self.indexOf(value) === index
+      );
+    }
+
+    existing.grave = grave;
+    existing.generation = generation;
+    existing.location = location;
+    existing.note = note;
+    existing.geom = geom;
+    existing.images = updatedImages;
+    existing.videos = updatedVideos;
+
+    await existing.save();
+
     res.json({ message: 'Cập nhật thành công' });
   } catch (err) {
+    console.error('Lỗi khi cập nhật:', err);
     res.status(500).json({ message: 'Lỗi khi cập nhật' });
   }
 });
