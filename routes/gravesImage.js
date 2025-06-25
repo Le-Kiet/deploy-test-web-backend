@@ -62,18 +62,18 @@ router.put('/:id', async (req, res) => {
     !geom ||
     geom.type !== 'Point' ||
     !Array.isArray(geom.coordinates) ||
-    geom.coordinates.length !== 2
+    geom.coordinates.length !== 2 ||
+    geom.coordinates.some(c => typeof c !== 'number' || isNaN(c))
   ) {
     return res.status(422).json({ message: 'Dữ liệu không hợp lệ' });
   }
 
   try {
-    const existing = await GraveImage.findById(req.params.id);
+    const existing = await Grave.findById(req.params.id);
     if (!existing) {
       return res.status(404).json({ message: 'Không tìm thấy dữ liệu' });
     }
 
-    // Xử lý images: nối vào dữ liệu cũ nếu có
     let updatedImages = existing.images || [];
     if (Array.isArray(images)) {
       updatedImages = [...updatedImages, ...images].filter(
@@ -81,7 +81,6 @@ router.put('/:id', async (req, res) => {
       );
     }
 
-    // Xử lý videos: nối vào dữ liệu cũ nếu có
     let updatedVideos = existing.videos || [];
     if (Array.isArray(videos)) {
       updatedVideos = [...updatedVideos, ...videos].filter(
@@ -97,14 +96,15 @@ router.put('/:id', async (req, res) => {
     existing.images = updatedImages;
     existing.videos = updatedVideos;
 
-    await existing.save();
+    await existing.save({ validateBeforeSave: true });
 
     res.json({ message: 'Cập nhật thành công' });
   } catch (err) {
-    console.error('Lỗi khi cập nhật:', err);
-    res.status(500).json({ message: 'Lỗi khi cập nhật' });
+    console.error('Lỗi khi cập nhật:', err.message, err.stack);
+    res.status(500).json({ message: err.message });
   }
 });
+
 
 
 
