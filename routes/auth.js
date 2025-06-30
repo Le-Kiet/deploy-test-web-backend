@@ -5,7 +5,11 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'; // Nên để vào .env
+const JWT_SECRET = process.env.JWT_SECRET || 'gravemapigeo'; // Nên để vào .env
+
+
+
+
 
 // Đăng ký
 router.post('/register', async (req, res) => {

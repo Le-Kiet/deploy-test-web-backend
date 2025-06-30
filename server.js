@@ -1,4 +1,4 @@
-// server.js hoặc file server chính của bạn
+// server.js
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -7,10 +7,11 @@ const userRoutes = require('./routes/userRoutes');
 const anniversariesRouter = require('./routes/anniversaries');
 const gravesRouter = require('./routes/graves');
 const gravesImageRouter = require('./routes/gravesImage');
-const uploadVideoRouter = require('./routes/uploadVideo');  // <-- import router upload video
-const authRoutes = require('./routes/auth');
-// const postRoutes = require('./routes/posts');
-require('dotenv').config();
+const uploadVideoRouter = require('./routes/uploadVideo');
+const authRoutes = require('./routes/auth');  // Đường dẫn đến file auth.js bạn tạo
+const cron = require('node-cron');
+const updateUpcomingAnniversaries = require('./jobs/updateUpcomingAnniversaries');
+const shouldRunToday = require('./jobs/shouldRunToday');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -18,14 +19,36 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Các route hiện tại
 app.use('/api/anniversaries', anniversariesRouter);
 app.use('/api/users', userRoutes);
 app.use('/api/graves', gravesRouter);
 app.use('/api/graveImage', gravesImageRouter);
+app.use('/api/upload-video', uploadVideoRouter);
 
-app.use('/api/upload-video', uploadVideoRouter);  // <-- đăng ký route upload video
+// Route cho auth Firebase
 app.use('/api/auth', authRoutes);
-// app.use('/api/posts', postRoutes);
+
+// Route để lấy danh sách ngày kỵ sắp đến
+// updateUpcomingAnniversaries();
+(async () => {
+  if (await shouldRunToday()) {
+    console.log('🕐 Cập nhật ngày kỵ khi khởi động server...');
+    await updateUpcomingAnniversaries();
+  } else {
+    console.log('✅ Ngày kỵ đã được cập nhật hôm nay. Không cần chạy lại.');
+  }
+})();
+// cron.schedule('5 0 * * *', () => {
+//   console.log('🕐 Đang cập nhật danh sách ngày kỵ sắp đến...');
+//   updateUpcomingAnniversaries();
+// });
+// cron.schedule('*/300 * * * * *', () => {
+//   updateUpcomingAnniversaries();
+//   console.log('⏰ Chạy mỗi 300 giây');
+// });
+// Kết nối MongoDB
+require('dotenv').config();
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('MongoDB connected');

@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Anniversary = require('../models/Anniversary');
 const { deleteImageByUrl } = require('../utils/cloudinaryHelper');
+const UpcomingAnniversary = require('../models/UpcomingAnniversary');
+
 function isValidCoordinates(coords) {
   return Array.isArray(coords) &&
     coords.length === 2 &&
@@ -168,4 +170,17 @@ router.delete('/:id', async (req, res) => {
 });
 
 
+//lấy danh sách ngày kỵ sắp đến
+router.get('/upcoming-anniversaries', async (req, res) => {
+  try {
+    const data = await UpcomingAnniversary.find()
+      .sort({ days_remaining: 1 })
+      .limit(50); // hoặc truyền limit từ client
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Không thể truy xuất danh sách' });
+  }
+});
+
+module.exports = router;
 module.exports = router;
