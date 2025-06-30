@@ -3,6 +3,7 @@ const router = express.Router();
 const Anniversary = require('../models/Anniversary');
 const { deleteImageByUrl } = require('../utils/cloudinaryHelper');
 const UpcomingAnniversary = require('../models/UpcomingAnniversary');
+const updateUpcomingAnniversaries = require('../jobs/updateUpcomingAnniversaries');
 
 function isValidCoordinates(coords) {
   return Array.isArray(coords) &&
@@ -105,6 +106,7 @@ router.post('/', async (req, res) => {
 
     await newAnni.save();
     console.log('Saved anniversary:', newAnni);
+    updateUpcomingAnniversaries()
     res.status(201).json({ message: 'Thêm sự kiện thành công', data: newAnni });
   } catch (err) {
     console.error('Lỗi khi thêm sự kiện:', err);
@@ -143,6 +145,7 @@ router.put('/:id', async (req, res) => {
     });
 
     await data.save();
+    updateUpcomingAnniversaries()
     res.json({ message: 'Cập nhật thành công' });
   } catch (err) {
     console.error('Lỗi cập nhật:', err);
@@ -162,6 +165,8 @@ router.delete('/:id', async (req, res) => {
     }
 
     await Anniversary.deleteOne({ _id: req.params.id });
+    updateUpcomingAnniversaries()
+
     res.json({ message: 'Xóa thành công' });
   } catch (err) {
     console.error('Lỗi khi xóa:', err);

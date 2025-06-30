@@ -30,23 +30,16 @@ app.use('/api/upload-video', uploadVideoRouter);
 app.use('/api/auth', authRoutes);
 
 // Route để lấy danh sách ngày kỵ sắp đến
-// updateUpcomingAnniversaries();
+updateUpcomingAnniversaries();
 (async () => {
   if (await shouldRunToday()) {
-    console.log('🕐 Cập nhật ngày kỵ khi khởi động server...');
+    console.log('Cập nhật ngày kỵ khi khởi động server...');
     await updateUpcomingAnniversaries();
   } else {
     console.log('✅ Ngày kỵ đã được cập nhật hôm nay. Không cần chạy lại.');
   }
 })();
-// cron.schedule('5 0 * * *', () => {
-//   console.log('🕐 Đang cập nhật danh sách ngày kỵ sắp đến...');
-//   updateUpcomingAnniversaries();
-// });
-// cron.schedule('*/300 * * * * *', () => {
-//   updateUpcomingAnniversaries();
-//   console.log('⏰ Chạy mỗi 300 giây');
-// });
+
 // Kết nối MongoDB
 require('dotenv').config();
 mongoose.connect(process.env.MONGO_URI)
