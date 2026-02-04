@@ -23,12 +23,13 @@ router.post('/', async (req, res) => {
   const { grave, generation, location, note, geom, images, videos } = req.body;
 
   if (
-    !grave || !generation ||
-    !location ||
-    !geom ||
-    geom.type !== 'Point' ||
-    !Array.isArray(geom.coordinates) ||
-    geom.coordinates.length !== 2
+    !grave || !generation 
+    // ||
+    // !location ||
+    // !geom ||
+    // geom.type !== 'Point' ||
+    // !Array.isArray(geom.coordinates) ||
+    // geom.coordinates.length !== 2
   ) {
     return res.status(422).json({ message: 'Dữ liệu không hợp lệ' });
   }
