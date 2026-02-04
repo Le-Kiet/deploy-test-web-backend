@@ -4,6 +4,7 @@ const Anniversary = require('../models/Anniversary');
 const { deleteImageByUrl } = require('../utils/cloudinaryHelper');
 const UpcomingAnniversary = require('../models/UpcomingAnniversary');
 const updateUpcomingAnniversaries = require('../jobs/updateUpcomingAnniversaries');
+const getNextSequence = require('../utils/getNextSequence');
 
 function isValidCoordinates(coords) {
   return Array.isArray(coords) &&
@@ -42,9 +43,9 @@ router.get('/', async (req, res) => {
 
 // POST new
 
+
 router.post('/', async (req, res) => {
   const {
-    id,
     anni_date,
     event_name,
     location_name,
@@ -56,12 +57,11 @@ router.post('/', async (req, res) => {
     videos
   } = req.body;
 
-  // Kiểm tra dữ liệu bắt buộc
-  if (!id || !anni_date || !event_name || !location_name || !address) {
+  // ✅ BỎ id khỏi validate
+  if (!anni_date || !event_name ) {
     return res.status(422).json({ message: 'Thiếu thông tin bắt buộc' });
   }
 
-  // Kiểm tra tọa độ nếu có
   const isValidPoint = (geom) =>
     geom &&
     geom.type === 'Point' &&
@@ -77,8 +77,12 @@ router.post('/', async (req, res) => {
   }
 
   try {
+    // ⭐ LẤY ID AUTO
+    const newId = await getNextSequence('anniversary_id');
+
     const newAnni = new Anniversary({
-      _id: id,
+  id: newId,   // ✅ dùng id riêng
+
       anni_date,
       event_name,
       location_name,
@@ -90,6 +94,7 @@ router.post('/', async (req, res) => {
       videos
     });
 
+    // ⭐ giữ nguyên logic cũ của bạn
     if (isValidCoordinates(location_coordinates)) {
       newAnni.location_coordinates = {
         type: 'Point',
@@ -105,9 +110,16 @@ router.post('/', async (req, res) => {
     }
 
     await newAnni.save();
+
     console.log('Saved anniversary:', newAnni);
-    updateUpcomingAnniversaries()
-    res.status(201).json({ message: 'Thêm sự kiện thành công', data: newAnni });
+
+    updateUpcomingAnniversaries();
+
+    res.status(201).json({
+      message: 'Thêm sự kiện thành công',
+      data: newAnni
+    });
+
   } catch (err) {
     console.error('Lỗi khi thêm sự kiện:', err);
     res.status(500).json({ message: 'Lỗi khi thêm sự kiện' });
@@ -118,40 +130,46 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const data = await Anniversary.findById(req.params.id);
-    if (!data) return res.status(404).json({ message: 'Không tìm thấy dữ liệu' });
 
-    // Xử lý videos
-    if (req.body.videos && Array.isArray(req.body.videos)) {
-      const oldVideos = data.videos || [];
-      const newVideos = req.body.videos;
-      data.videos = [...oldVideos, ...newVideos].filter(
-        (value, index, self) => self.indexOf(value) === index
-      );
+    if (!data)
+      return res.status(404).json({ message: 'Không tìm thấy dữ liệu' });
+
+    const { id, _id, ...safeBody } = req.body; // ⭐ bỏ id/_id
+
+    if (safeBody.videos) {
+      data.videos = [
+        ...(data.videos || []),
+        ...safeBody.videos,
+      ].filter((v, i, s) => s.indexOf(v) === i);
     }
 
-    // Xử lý images
-    if (req.body.images && Array.isArray(req.body.images)) {
-      const oldImages = data.images || [];
-      const newImages = req.body.images;
-      data.images = [...oldImages, ...newImages].filter(
-        (value, index, self) => self.indexOf(value) === index
-      );
+    if (safeBody.images) {
+      data.images = [
+        ...(data.images || []),
+        ...safeBody.images,
+      ].filter((v, i, s) => s.indexOf(v) === i);
     }
 
     Object.assign(data, {
-      ...req.body,
-      location_coordinates: req.body.location_coordinates ?? data.location_coordinates,
-      grave_coordinates: req.body.grave_coordinates ?? data.grave_coordinates,
+      ...safeBody,
+      location_coordinates:
+        safeBody.location_coordinates ?? data.location_coordinates,
+      grave_coordinates:
+        safeBody.grave_coordinates ?? data.grave_coordinates,
     });
 
     await data.save();
-    updateUpcomingAnniversaries()
+
+    updateUpcomingAnniversaries();
+
     res.json({ message: 'Cập nhật thành công' });
+
   } catch (err) {
     console.error('Lỗi cập nhật:', err);
     res.status(500).json({ message: err.message });
   }
 });
+
 
 // DELETE
 router.delete('/:id', async (req, res) => {

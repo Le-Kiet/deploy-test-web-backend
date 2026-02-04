@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Grave = require('../models/Grave');
+const getNextSequence = require('../utils/getNextSequence');
 
 // GET all graves
 router.get('/', async (req, res) => {
@@ -19,73 +20,102 @@ router.get('/', async (req, res) => {
 
 // POST new grave
 router.post('/', async (req, res) => {
-  const { grave, generation, location, note, geom, images } = req.body;
+  const { grave, generation, location, note, geom, images, videos } = req.body;
 
-
-
-  if (!grave || !location || !geom || geom.type !== 'Point' || !Array.isArray(geom.coordinates) || geom.coordinates.length !== 2) {
-    return res.status(422).json({ message: 'Dữ liệu không hợp lệ' });
-  }
-
-  try {
-
-  const newGrave = new Grave({
-    grave,
-    generation,
-    location,
-    note,
-    geom,
-    images
-  });
-  console.log(req.body);
-    await newGrave.save();
-    console.log('Saved grave:', newGrave);
-    res.status(201).json({ message: 'Thêm thành công', data: newGrave });
-  } catch (err) {
-    res.status(500).json({ message: 'Lỗi khi thêm mộ phần' });
-  }
-});
-
-// PUT update grave
-router.put('/:id', async (req, res) => {
-  const { grave, generation, location, note, geom, images } = req.body;
-
-  // Kiểm tra dữ liệu hợp lệ
   if (
-    typeof grave !== 'string' ||
-    typeof location !== 'string' ||
+    !grave || !generation ||
+    !location ||
     !geom ||
     geom.type !== 'Point' ||
     !Array.isArray(geom.coordinates) ||
-    geom.coordinates.length !== 2 ||
-    (images && !Array.isArray(images))
+    geom.coordinates.length !== 2
   ) {
     return res.status(422).json({ message: 'Dữ liệu không hợp lệ' });
   }
 
   try {
-    const updated = await Grave.findByIdAndUpdate(
-      req.params.id,
-      {
-        grave,
-        generation,
-        location,
-        note,
-        geom,
-        images: images || [] // nếu không gửi images thì để mặc định là []
-      },
-      { new: true } // trả về bản ghi đã cập nhật
-    );
+    // ⭐ auto increment id
+    const newId = await getNextSequence('grave_id');
 
-    if (!updated) {
+    const newGrave = new Grave({
+      id: newId,   // ⭐ giống Anniversary
+
+      grave,
+      generation,
+      location,
+      note,
+      geom,
+      images,
+      videos
+    });
+
+    await newGrave.save();
+
+    console.log('Saved grave:', newGrave);
+
+    res.status(201).json({
+      message: 'Thêm thành công',
+      data: newGrave
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Lỗi khi thêm mộ phần' });
+  }
+});
+
+
+// PUT update grave
+router.put('/:id', async (req, res) => {
+  try {
+    const graveDoc = await Grave.findById(req.params.id);
+
+    if (!graveDoc)
       return res.status(404).json({ message: 'Không tìm thấy dữ liệu' });
+
+    const {
+      id,      // ⭐ bỏ
+      _id,     // ⭐ bỏ
+      images,
+      ...safeBody
+    } = req.body;
+
+    // ⭐ validate geom nếu có
+    if (safeBody.geom) {
+      const g = safeBody.geom;
+      if (
+        g.type !== 'Point' ||
+        !Array.isArray(g.coordinates) ||
+        g.coordinates.length !== 2
+      ) {
+        return res.status(422).json({ message: 'Tọa độ không hợp lệ' });
+      }
     }
 
-    res.json({ message: 'Cập nhật thành công', data: updated });
+    // ⭐ update fields
+    Object.assign(graveDoc, safeBody);
+
+    // ⭐ chỉ update images khi gửi lên
+    if (images) {
+      graveDoc.images = [
+        ...(graveDoc.images || []),
+        ...images
+      ].filter((v, i, s) => s.indexOf(v) === i);
+    }
+
+    await graveDoc.save();
+
+    res.json({
+      message: 'Cập nhật thành công',
+      data: graveDoc
+    });
+
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Lỗi khi cập nhật' });
   }
 });
+
 
 
 // DELETE grave

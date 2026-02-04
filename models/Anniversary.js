@@ -9,32 +9,40 @@ const PointSchema = new mongoose.Schema(
     },
     coordinates: {
       type: [Number],
-      default: undefined, // ⛔ Đây là mấu chốt: KHÔNG gán mảng rỗng mặc định
+      default: undefined,
     },
   },
   { _id: false }
 );
 
 const AnniversarySchema = new mongoose.Schema({
-  _id: { type: String, required: true, unique: true },
+  id: {
+    type: Number,      // ⭐ string giữ 00001
+    unique: true,
+    index: true
+  },
+
   anni_date: { type: String, required: true },
   event_name: { type: String, required: true },
   location_name: { type: String },
   address: { type: String },
+
   location_coordinates: {
     type: PointSchema,
     default: undefined,
   },
+
   grave_coordinates: {
     type: PointSchema,
     default: undefined,
   },
+
   note: { type: String },
-images: { type: [String], default: [] },
-videos: { type: [String], default: [] },
+
+  images: { type: [String], default: [] },
+  videos: { type: [String], default: [] },
 });
 
-// Chỉ tạo chỉ mục nếu trường tồn tại
 AnniversarySchema.index({ location_coordinates: '2dsphere' }, { sparse: true });
 AnniversarySchema.index({ grave_coordinates: '2dsphere' }, { sparse: true });
 
