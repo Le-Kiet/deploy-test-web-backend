@@ -16,11 +16,12 @@ const PointSchema = new mongoose.Schema(
 );
 
 const AnniversarySchema = new mongoose.Schema({
-  id: {
-    type: Number,      // ⭐ string giữ 00001
-    unique: true,
-    index: true
-  },
+id: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'Anniversary',
+  required: true
+},
+
 
   anni_date: { type: String, required: true },
   event_name: { type: String, required: true },
@@ -45,5 +46,11 @@ const AnniversarySchema = new mongoose.Schema({
 
 AnniversarySchema.index({ location_coordinates: '2dsphere' }, { sparse: true });
 AnniversarySchema.index({ grave_coordinates: '2dsphere' }, { sparse: true });
+AnniversarySchema.pre('validate', function (next) {
+  if (!this._id) {
+    this._id = new mongoose.Types.ObjectId();
+  }
+  next();
+});
 
 module.exports = mongoose.model('Anniversary', AnniversarySchema);

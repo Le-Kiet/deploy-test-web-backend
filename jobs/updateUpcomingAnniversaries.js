@@ -13,7 +13,8 @@ async function updateUpcomingAnniversaries() {
   // Xoá cache cũ
   await UpcomingAnniversary.deleteMany({});
 
-  const anniversaries = await Anniversary.find({});
+const anniversaries = await Anniversary.find({ _id: { $exists: true } });
+
   const upcomingList = [];
 
   for (let item of anniversaries) {
@@ -30,6 +31,10 @@ async function updateUpcomingAnniversaries() {
         const diff = djs.diff(today, 'day');
 
         if (diff >= 0 && diff <= 7) {
+            if (!item._id) {
+    console.log('❌ Missing _id:', item);
+    continue;
+  }
           upcomingList.push({
             anniversary_id: item._id,
             anni_date: item.anni_date,
@@ -45,7 +50,8 @@ async function updateUpcomingAnniversaries() {
   }
 
   if (upcomingList.length) {
-    await UpcomingAnniversary.insertMany(upcomingList);
+await UpcomingAnniversary.insertMany(upcomingList, { ordered: false });
+
     console.log(`✅ Đã cập nhật ${upcomingList.length} ngày kỵ sắp tới`);
   } else {
     console.log(`ℹ️ Không có ngày kỵ nào trong 7 ngày tới`);

@@ -41,7 +41,9 @@ mongoose.connect(process.env.MONGO_URI)
     // ⭐ CHỈ CHẠY SAU KHI CONNECT
     if (await shouldRunToday()) {
       console.log('Cập nhật ngày kỵ khi khởi động server...');
-      await updateUpcomingAnniversaries();
+      updateUpcomingAnniversaries()
+  .catch(err => console.error('Update upcoming failed:', err));
+
     }
 
     app.listen(PORT, () =>
